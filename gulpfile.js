@@ -1,33 +1,32 @@
 var gulp = require('gulp'),
-    uglify = require('gulp-uglify'),
-    rename = require('gulp-rename'),
-    sass = require('gulp-sass'),
-    plumber = require('gulp-plumber'),
-    browser_sync = require('browser-sync'),
-    reload = browser_sync.reload;
+del = require('del'),
+browser_sync = require('browser-sync'),
+reload = browser_sync.reload;
 
-    gulp.task('scripts', function(){
-        console.log('Task is running...');
-        gulp.src(['./js/*', '!./js/*.min.js'])
-        .pipe(plumber())
-        .pipe(rename({suffix: '.min'}))
-        .pipe(uglify())
-        .pipe(gulp.dest('./'))
-        .pipe(reload({stream:true}))
-    });
+//Build Tasks
 
-gulp.task('html', function(){
-    gulp.src('./index.html')
-    .pipe(reload({stream:true}))
+//Clean build folder
+gulp.task('build:clean', function () {
+    del([
+        './build'
+    ])
 })
 
+//Copy all the files to build folder
+gulp.task('build:copy', ['build:clean'], function () {
+    return gulp.src('./**')
+        .pipe(gulp.dest('./build'));
+})
 
-gulp.task('preprocess-css', function(){
-    gulp.src('./css/*.scss')
-    .pipe(sass())
-    .pipe(gulp.dest('./'))
-    .pipe(reload({stream:true}));
-});
+//Remove unwanted files
+gulp.task('build:removeunwated', ['build:copy'], function (cb) {
+    del([
+      'build/node_modules/**/*',
+        'build/node_modules',
+        'build/npm-debug.log',
+        'build/.gitignore'        
+    ], cb);
+})
 
 gulp.task('browser-sync', function(){
     browser_sync({
@@ -37,10 +36,18 @@ gulp.task('browser-sync', function(){
     })
 })
 
-    gulp.task('watch', function(){
-        gulp.watch('./js/*.js', ['scripts']);
-        gulp.watch('./css/*.scss', ['preprocess-css']);
-        gulp.watch('./index.html', ['html']); 
-    });
+// gulp.task('reload', function(){
+//   gulp.src('./build')
+//   .pipe(reload({stream:true}));
 
-    gulp.task('default', ['scripts', 'preprocess-css', 'html', 'browser-sync', 'watch']);
+//   gulp.src('./**/*')
+//   .pipe(reload({stream:true}));
+// })
+
+// gulp.task('watch', function(){
+//   gulp.watch('./build', ['reload']);
+//   gulp.watch('./**/*', ['reload'])
+// });
+
+//Final build
+gulp.task('build', ['build:clean', 'build:copy', 'build:removeunwated', 'reload', 'browser-sync', 'watch']);
